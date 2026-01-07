@@ -1,3 +1,3 @@
-# collection_creator
+# Collection Creator
 
-A new Flutter project.
+A way to create a schema for your collections and catalogue items within these colections.
