@@ -48,7 +48,7 @@ class _MainAppState extends State<MainApp> {
             brightness: Brightness.dark,
           ),
           themeMode: settings.themeMode,
-          home: HomePage(),
+          home: Builder(builder: (context) => HomePage()),
           debugShowCheckedModeBanner: false,
         );
       }
@@ -227,7 +227,10 @@ class _CollectionsPageState extends State<CollectionsPage>{
             itemBuilder: (context, index){
               return Card(child: Row(children: [
                 Expanded(child: Padding(padding: EdgeInsets.all(_spacing), child: ElevatedButton(
-                  style: ElevatedButton.styleFrom(padding: EdgeInsets.all(_padding)),
+                  style: ElevatedButton.styleFrom(
+                    padding: EdgeInsets.all(_padding),
+                    textStyle: Theme.of(context).textTheme.titleMedium,
+                  ),
                   onPressed: () async {
                     final r = await Navigator.push(context, MaterialPageRoute(builder: (context) => CollectionPage(boxName: _displayBoxes[index])));
                     await Future.delayed(const Duration(milliseconds: 100));
@@ -236,7 +239,7 @@ class _CollectionsPageState extends State<CollectionsPage>{
                       await _removeBox(name);
                     }
                   },
-                  child: Text(_displayBoxes[index], style: Theme.of(context).textTheme.titleMedium),
+                  child: Text(_displayBoxes[index]),
                 ))),
                 Padding(padding: EdgeInsets.all(_spacing), child: PopupMenuButton<String>(
                   itemBuilder: (context){
@@ -556,18 +559,19 @@ class _CollectionPageState extends State<CollectionPage>{
                 flex: td == SchemaFieldTypes.textArea ? 3 : 
                       [SchemaFieldTypes.integer, SchemaFieldTypes.double].contains(td) ? 1 : 2,
                 child: GestureDetector(
-                onTap: (){
-                  setState((){
-                    if(_sortColumn == k){_sortAsc = !_sortAsc;}
-                    else{
-                      _sortColumn = k;
-                      _sortAsc = true;
-                    }
-                  });
-                  _applyQuery();
-                },
-                child: Expanded(child: Text(k.toString(), textAlign: TextAlign.center, style: Theme.of(context).textTheme.titleMedium))
-              ));
+                  onTap: (){
+                    setState((){
+                      if(_sortColumn == k){_sortAsc = !_sortAsc;}
+                      else{
+                        _sortColumn = k;
+                        _sortAsc = true;
+                      }
+                    });
+                    _applyQuery();
+                  },
+                  child: Text(k.toString(), textAlign: TextAlign.center, style: Theme.of(context).textTheme.titleMedium)
+                )
+              );
             }),
             SizedBox(width: 40)
           ]
@@ -579,7 +583,7 @@ class _CollectionPageState extends State<CollectionPage>{
             itemBuilder: (context, index){
               return index == _displayData.length ? SizedBox(height: _padding*3) :
               Card(child: Padding(padding: EdgeInsets.all(_spacing), child: Row(spacing: _margin, children: [
-                ..._columnsA.map<Widget>((k){
+                ..._columnsA.map((k){
                   final td = _schema.firstWhere((x) => x["name"] == k)["type"];
                   return Expanded(
                     flex: td == SchemaFieldTypes.textArea ? 3 : 
