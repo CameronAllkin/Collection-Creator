@@ -828,7 +828,7 @@ class _CollectionItemPageState extends State<CollectionItemPage>{
                 );
               case SchemaFieldTypes.boolean:
                 _widget = DropdownButtonFormField<String>(
-                  initialValue: _formFields[index],
+                  initialValue: ["False", "True"].contains(_formFields[index]) ? _formFields[index] : _fieldOptions[0],
                   items: ["False", "True"].map((x){
                     return DropdownMenuItem(
                       value: x,
@@ -843,7 +843,7 @@ class _CollectionItemPageState extends State<CollectionItemPage>{
                 );
               case SchemaFieldTypes.dropdown:
                 _widget = DropdownButtonFormField<String>(
-                  initialValue: _formFields[index],
+                  initialValue: _fieldOptions.contains(_formFields[index]) ? _formFields[index] : _fieldOptions[0],
                   items: _fieldOptions.map((x){
                     return DropdownMenuItem(
                       value: x,
