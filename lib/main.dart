@@ -300,8 +300,8 @@ class _CollectionSchemaPageState extends State<CollectionSchemaPage>{
   final _formKey = GlobalKey<FormState>();
   late final bool _hasSchema;
 
-
   late final _schemaName = TextEditingController();
+  late List<String> _initFields;
   late List<SchemaField> _fields = [];
 
   @override
@@ -311,6 +311,7 @@ class _CollectionSchemaPageState extends State<CollectionSchemaPage>{
     print(_hasSchema);
     if(_hasSchema){
       _schemaName.text = widget.boxName!;
+      _initFields = widget.initSchema!.map((x) => x["name"].toString()).toList();
       _fields = List<SchemaField>.from(widget.initSchema!.map((x) => SchemaField(name: x["name"], type: x["type"], options: x["options"])));
     }
   }
@@ -337,7 +338,7 @@ class _CollectionSchemaPageState extends State<CollectionSchemaPage>{
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text("Collection Schema")),
+      appBar: AppBar(title: _hasSchema ? Text("Edit Collection Schema") : Text("Collection Schema")),
       floatingActionButton: FloatingActionButton(
         child: const Icon(Icons.add_rounded),
         onPressed: _addField
@@ -368,6 +369,7 @@ class _CollectionSchemaPageState extends State<CollectionSchemaPage>{
               children: [
                 Expanded(flex: 2, child: TextFormField(
                   initialValue: _field.name,
+                  enabled: !_initFields.contains(_field.name),
                   decoration: InputDecoration(
                     labelText: "Field Name",
                     border: OutlineInputBorder(borderRadius: BorderRadius.circular(_spacing))
@@ -424,6 +426,37 @@ class _CollectionSchemaPageState extends State<CollectionSchemaPage>{
 
 
 
+
+
+
+class CollectionRenameReorderPage extends StatefulWidget{
+  final String boxName;
+  final List<dynamic> schema;
+
+  const CollectionRenameReorderPage({
+    super.key,
+    required this.boxName,
+    required this.schema
+  });
+
+  @override
+  State<CollectionRenameReorderPage> createState() => _CollectionRenameReorderPageState();
+}
+
+class _CollectionRenameReorderPageState extends State<CollectionRenameReorderPage>{
+  final _formKey = GlobalKey<FormState>();
+
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: Text("Collection Schema")),
+      body: SafeArea(child: Form(key: _formKey, child: SingleChildScrollView(child: Padding(padding: EdgeInsets.all(_padding), child: Center(child: Column(spacing: _spacing, children: [
+        Text("Test")
+      ]))))))
+    );
+  }
+}
 
 
 
@@ -518,11 +551,17 @@ class _CollectionPageState extends State<CollectionPage>{
               return [
                 PopupMenuItem(
                   onTap: () async {
-                    // Navigator.pop(context);
+                    final res = await Navigator.push(context, MaterialPageRoute(builder: (context) => CollectionRenameReorderPage(boxName: _name, schema: _schema)));
+                    await _getBoxData();
+                  },
+                  child: Text("Rename / Reorder")
+                ),
+                PopupMenuItem(
+                  onTap: () async {
                     final res = await Navigator.push(context, MaterialPageRoute(builder: (context) => CollectionSchemaPage(boxNames: [], boxName: _name, initSchema: _schema)));
                     await _getBoxData();
                   },
-                  child: Text("Edit")
+                  child: Text("Edit Schema")
                 ),
                 PopupMenuItem(
                   onTap: () async {
