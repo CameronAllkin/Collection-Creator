@@ -247,7 +247,7 @@ class _CollectionsPageState extends State<CollectionsPage>{
                       // PopupMenuItem<String>(
                       //   onTap: () async {
                       //     final res = await Navigator.push(context, MaterialPageRoute(builder: (context) => CollectionSchemaPage(boxNames: _boxes)));
-                      //     await _getBoxes();
+                          
                       //   },
                       //   child: Text("Edit")
                       // ),
@@ -283,9 +283,13 @@ class _CollectionsPageState extends State<CollectionsPage>{
 
 class CollectionSchemaPage extends StatefulWidget{
   final List<String> boxNames;
+  final String? boxName;
+  final List<dynamic>? initSchema;
   const CollectionSchemaPage({
     super.key,
-    required this.boxNames
+    required this.boxNames,
+    this.boxName,
+    this.initSchema
   });
 
   @override
@@ -294,9 +298,22 @@ class CollectionSchemaPage extends StatefulWidget{
 
 class _CollectionSchemaPageState extends State<CollectionSchemaPage>{
   final _formKey = GlobalKey<FormState>();
+  late final bool _hasSchema;
 
-  final _schemaName = TextEditingController();
-  final List<SchemaField> _fields = [];
+
+  late final _schemaName = TextEditingController();
+  late List<SchemaField> _fields = [];
+
+  @override
+  void initState(){
+    super.initState();
+    _hasSchema = widget.boxName != null && widget.initSchema != null;
+    print(_hasSchema);
+    if(_hasSchema){
+      _schemaName.text = widget.boxName!;
+      _fields = List<SchemaField>.from(widget.initSchema!.map((x) => SchemaField(name: x["name"], type: x["type"], options: x["options"])));
+    }
+  }
 
   void _addField(){
     setState(() => _fields.add(SchemaField()));
@@ -313,7 +330,7 @@ class _CollectionSchemaPageState extends State<CollectionSchemaPage>{
     final schemaName = _schemaName.text;
     for(final field in _fields){if(field.name.isEmpty || field.type.isEmpty) return;}
     
-    createCollection(schemaName, _fields);
+    _hasSchema ? updateCollectionSchema(schemaName, _fields) : createCollection(schemaName, _fields);
     Navigator.pop(context, true);
   }
 
@@ -328,6 +345,8 @@ class _CollectionSchemaPageState extends State<CollectionSchemaPage>{
       body: SafeArea(child: Form(key: _formKey, child: SingleChildScrollView(child: Padding(padding: EdgeInsets.all(_padding), child: Center(child: Column(spacing: _spacing, children: [
         TextFormField(
           controller: _schemaName,
+          enabled: !_hasSchema,
+          readOnly: _hasSchema,
           decoration: InputDecoration(
             labelText: "Schema Name",
             border: OutlineInputBorder(borderRadius: BorderRadius.circular(_spacing))
@@ -441,6 +460,7 @@ class _CollectionPageState extends State<CollectionPage>{
   bool _loading = true;
 
   Future<void> _getBoxData() async {
+    if(!mounted) return;
     setState(() {
       _loading = true;
       _schema = [];
@@ -454,6 +474,7 @@ class _CollectionPageState extends State<CollectionPage>{
     setState(() {
       _schema = box.get("fields");
       _data = box.get("data");
+      _columns = {};
       for(String k in _schema.map((x) => x["name"])){
         _columns[k] = true;
       }
@@ -496,7 +517,11 @@ class _CollectionPageState extends State<CollectionPage>{
             itemBuilder: (context){
               return [
                 PopupMenuItem(
-                  onTap: (){},
+                  onTap: () async {
+                    // Navigator.pop(context);
+                    final res = await Navigator.push(context, MaterialPageRoute(builder: (context) => CollectionSchemaPage(boxNames: [], boxName: _name, initSchema: _schema)));
+                    await _getBoxData();
+                  },
                   child: Text("Edit")
                 ),
                 PopupMenuItem(

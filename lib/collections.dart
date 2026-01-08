@@ -49,6 +49,11 @@ Future<void> createCollection(String name, List<SchemaField> fields) async {
   b.put("data", []);
 }
 
+Future<void> updateCollectionSchema(String name, List<SchemaField> fields) async {
+  final b = await getBox(name);
+  b.put("fields", fields.map((x) => {"name": x.name, "type": x.type, "options": x.options}).toList());
+}
+
 
 class SchemaField{
   String name;
