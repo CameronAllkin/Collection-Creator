@@ -665,7 +665,8 @@ class _CollectionPageState extends State<CollectionPage>{
             icon: Icon(Icons.filter_list_rounded)
         )
         ]),
-        Text("Displaying ${_displayData.length}/${_data.length} Items"),
+        Text("Displaying ${_displayData.length}/${_data.length} Items (${(_displayData.length/_data.length*100).toStringAsFixed(1)}%)"),
+        Divider(height: _margin),
         Card(child: Padding(padding: EdgeInsets.all(_spacing), child: Row(
           spacing: _margin,
           children: [
