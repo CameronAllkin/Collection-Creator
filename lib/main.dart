@@ -338,10 +338,18 @@ class _CollectionSchemaPageState extends State<CollectionSchemaPage>{
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: _hasSchema ? Text("Edit Collection Schema") : Text("Collection Schema")),
-      floatingActionButton: FloatingActionButton(
-        child: const Icon(Icons.add_rounded),
-        onPressed: _addField
-      ),
+      // floatingActionButton: FloatingActionButton(
+      //   child: const Icon(Icons.add_rounded),
+      //   onPressed: _addField
+      // ),
+      bottomNavigationBar: Padding(padding: EdgeInsets.all(_padding), child: ElevatedButton(
+        onPressed: _submit,
+        style: ElevatedButton.styleFrom(
+          padding: EdgeInsets.all(_padding),
+          textStyle: Theme.of(context).textTheme.titleMedium        
+        ),
+        child: Text("Create Collection")
+      )),
       body: SafeArea(child: Form(key: _formKey, child: SingleChildScrollView(child: Padding(padding: EdgeInsets.all(_padding), child: Center(child: Column(spacing: _spacing, children: [
         TextFormField(
           controller: _schemaName,
@@ -412,10 +420,10 @@ class _CollectionSchemaPageState extends State<CollectionSchemaPage>{
             ]));
           }
         )),
-        Row(children: [Expanded(child: ElevatedButton(
-          onPressed: _submit,
-          style: ElevatedButton.styleFrom(padding: EdgeInsets.all(_padding)),
-          child: const Text("Save Collection Schema"),
+        Row(children: [Expanded(child: IconButton(
+          onPressed: _addField,
+          style: IconButton.styleFrom(padding: EdgeInsets.all(_margin)),
+          icon: const Icon(Icons.add_rounded),
         ))])
       ]))))))
     );
@@ -596,7 +604,7 @@ class _CollectionPageState extends State<CollectionPage>{
                 PopupMenuItem(
                   onTap: () async {
                     final res = await Navigator.push(context, MaterialPageRoute(builder: (context) => CollectionRenameReorderPage(boxName: _name, schema: _schema)));
-                    await _getBoxData();
+                    if(res == true)await _getBoxData();
                   },
                   child: Text("Rename / Reorder")
                 ),
@@ -865,6 +873,14 @@ class _CollectionItemPageState extends State<CollectionItemPage>{
   Widget build(BuildContext context){
     return Scaffold(
       appBar: AppBar(title: Text("Add Item")),
+      bottomNavigationBar: Padding(padding: EdgeInsets.all(_padding), child: ElevatedButton(
+        onPressed: _submit,
+        style: ElevatedButton.styleFrom(
+          padding: EdgeInsets.all(_padding),
+          textStyle: Theme.of(context).textTheme.titleMedium        
+        ),
+        child: Text("Save Item")
+      )),
       body: SafeArea(child: Form(key: _formKey, child: SingleChildScrollView(child: Padding(padding: EdgeInsets.all(_padding), child: Center(child: Column(spacing: _spacing, children: [
         ListView.builder(
           itemCount: _schema.length,
@@ -973,11 +989,11 @@ class _CollectionItemPageState extends State<CollectionItemPage>{
             )]));
           }
         ),
-        Row(children: [Expanded(child: ElevatedButton(
-          onPressed: _submit,
-          style: ElevatedButton.styleFrom(padding: EdgeInsets.all(_padding)),
-          child: const Text("Save Item"),
-        ))])
+        // Row(children: [Expanded(child: ElevatedButton(
+        //   onPressed: _submit,
+        //   style: ElevatedButton.styleFrom(padding: EdgeInsets.all(_padding)),
+        //   child: const Text("Save Item"),
+        // ))])
       ]))))))
     );
   }
