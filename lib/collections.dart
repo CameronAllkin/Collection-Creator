@@ -19,7 +19,7 @@ Future<void> openBox(String name) async {
 Future<Box> getBox(String name) async {
   await openBox(name);
   final b = Hive.box(name);
-  for(final k in b.keys){print("${k}: ${b.get(k)}");}
+  // for(final k in b.keys){print("${k}: ${b.get(k)}");}
   return b;
 }
 
@@ -102,12 +102,14 @@ Future<void> SetDataForCollectionItem(String name, Map<String, dynamic> data, in
 
 
 List<dynamic> queryData(List<dynamic> data, List<dynamic> schema, String search, String sortColumn, bool sortAsc){
+  List<dynamic> usableSchema = schema.where((x) => x["type"] != SchemaFieldTypes.image).map((x) => x["name"]).toList();
   List<dynamic> filtered = List.from(data);
   if(search != ""){
     filtered = [];
     List<String> searchList = search.toLowerCase().split(" ");
     for(dynamic d in data){
-      String values = d.values.join(" ").toString().toLowerCase();
+      List<dynamic> usableData = d.keys.where((x) => usableSchema.contains(x)).toList();
+      String values = usableData.map((x) => d[x].toString().toLowerCase()).join(" ");
       bool match = true;
       for(String s in searchList){
         if(!values.contains(s)){

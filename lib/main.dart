@@ -308,7 +308,6 @@ class _CollectionSchemaPageState extends State<CollectionSchemaPage>{
   void initState(){
     super.initState();
     _hasSchema = widget.boxName != null && widget.initSchema != null;
-    print(_hasSchema);
     if(_hasSchema){
       _schemaName.text = widget.boxName!;
       _initFields = widget.initSchema!.map((x) => x["name"].toString()).toList();
@@ -646,57 +645,62 @@ class _CollectionPageState extends State<CollectionPage>{
             shrinkWrap: true,
             itemBuilder: (context, index){
               return index == _displayData.length ? SizedBox(height: _padding*3) :
-              Card(child: Padding(padding: EdgeInsets.all(_spacing), child: Row(spacing: _margin, children: [
-                ..._columnsA.map((k){
-                  final td = _schema.firstWhere((x) => x["name"] == k)["type"];
-                  return Expanded(
-                    flex: td == SchemaFieldTypes.textArea ? 3 : 
-                          [SchemaFieldTypes.integer, SchemaFieldTypes.double].contains(td) ? 1 : 2,
-                    child: td == SchemaFieldTypes.image ? 
-                      ClipRRect(borderRadius: BorderRadius.circular(_spacing), child: Image.network(
-                        _displayData[index][k].toString(), 
-                        loadingBuilder: (context, child, loadingProgress){
-                          if(loadingProgress == null) return child;
-                          return Center(child: CircularProgressIndicator());
-                        },
-                        errorBuilder: (context, error, StackTrace){
-                          return Center(child: Icon(Icons.broken_image_rounded));
-                        },
-                        fit: BoxFit.cover
-                      )):
-                      Text(_displayData[index][k].toString(), textAlign: TextAlign.center)
-                  );
-                }),
-                PopupMenuButton(
-                  itemBuilder: (context){
-                    return [
-                      PopupMenuItem(
-                        onTap: () async {
-                          await Navigator.push(context, MaterialPageRoute(builder: (context) => CollectionItemPage(name: _name, schema: _schema, data: Map<String, dynamic>.from(_displayData[index]), dataIndex: _data.indexOf(_displayData[index]))));
-                          await _getBoxData();
-                        },
-                        child: Text("Edit")
-                      ),
-                      PopupMenuItem(
-                        onTap: (){
-                          AddDataToCollection(_name, Map<String, dynamic>.from(_displayData[index]));
-                          _getBoxData();
-                        },
-                        child: Text("Duplicate")
-                      ),
-                      PopupMenuItem(
-                        onTap: (){
-                          final item = _displayData[index];
-                          _data.remove(item);
-                          SetDataForCollection(_name, List<Map<String, dynamic>>.from(_data.map((x) => Map<String, dynamic>.from(x))));
-                          _getBoxData();
-                        },
-                        child: Text("Delete")
-                      )
-                    ];
-                  }
-                )
-              ])));
+              GestureDetector(
+                onTap: () async {
+                  final res = Navigator.push(context, MaterialPageRoute(builder: (context) => CollectionItemDisplayPage(schema: _schema, data: Map<String, dynamic>.from(_displayData[index]))));
+                },
+                child: Card(child: Padding(padding: EdgeInsets.all(_spacing), child: Row(spacing: _margin, children: [
+                  ..._columnsA.map((k){
+                    final td = _schema.firstWhere((x) => x["name"] == k)["type"];
+                    return Expanded(
+                      flex: td == SchemaFieldTypes.textArea ? 3 : 
+                            [SchemaFieldTypes.integer, SchemaFieldTypes.double].contains(td) ? 1 : 2,
+                      child: td == SchemaFieldTypes.image ? 
+                        ClipRRect(borderRadius: BorderRadius.circular(_spacing), child: Image.network(
+                          _displayData[index][k].toString(), 
+                          loadingBuilder: (context, child, loadingProgress){
+                            if(loadingProgress == null) return child;
+                            return Center(child: CircularProgressIndicator());
+                          },
+                          errorBuilder: (context, error, StackTrace){
+                            return Center(child: Icon(Icons.broken_image_rounded));
+                          },
+                          fit: BoxFit.cover
+                        )):
+                        Text(_displayData[index][k].toString(), textAlign: TextAlign.center)
+                    );
+                  }),
+                  PopupMenuButton(
+                    itemBuilder: (context){
+                      return [
+                        PopupMenuItem(
+                          onTap: () async {
+                            await Navigator.push(context, MaterialPageRoute(builder: (context) => CollectionItemPage(name: _name, schema: _schema, data: Map<String, dynamic>.from(_displayData[index]), dataIndex: _data.indexOf(_displayData[index]))));
+                            await _getBoxData();
+                          },
+                          child: Text("Edit")
+                        ),
+                        PopupMenuItem(
+                          onTap: (){
+                            AddDataToCollection(_name, Map<String, dynamic>.from(_displayData[index]));
+                            _getBoxData();
+                          },
+                          child: Text("Duplicate")
+                        ),
+                        PopupMenuItem(
+                          onTap: (){
+                            final item = _displayData[index];
+                            _data.remove(item);
+                            SetDataForCollection(_name, List<Map<String, dynamic>>.from(_data.map((x) => Map<String, dynamic>.from(x))));
+                            _getBoxData();
+                          },
+                          child: Text("Delete")
+                        )
+                      ];
+                    }
+                  )
+                ])))
+              );
             }
           ))
       ])))
@@ -820,6 +824,7 @@ class _CollectionItemPageState extends State<CollectionItemPage>{
         ListView.builder(
           itemCount: _schema.length,
           shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
           itemBuilder: (context, index){
             final String _fieldName = _schema[index]["name"];
             final String _fieldType = _schema[index]["type"];
@@ -933,6 +938,65 @@ class _CollectionItemPageState extends State<CollectionItemPage>{
   }
 }
 
+
+
+
+
+
+
+class CollectionItemDisplayPage extends StatefulWidget{
+  final List<dynamic> schema;
+  final Map<String, dynamic> data;
+
+  CollectionItemDisplayPage({
+    super.key,
+    required this.schema,
+    required this.data
+  }); 
+  
+  @override
+  State<CollectionItemDisplayPage> createState() => _CollectionItemDisplayPageState();
+}
+
+class _CollectionItemDisplayPageState extends State<CollectionItemDisplayPage>{
+  late final _schema = widget.schema;
+  late final _data = widget.data;
+
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: Text("Item Info")),
+      body: SafeArea(child: Padding(padding: EdgeInsets.all(_padding), child:
+        ListView.builder(
+          itemCount: widget.schema.length,
+          shrinkWrap: true,
+          itemBuilder: (context, index){
+            final String _fieldName = _schema[index]["name"];
+            final String _fieldType = _schema[index]["type"];
+            final String _dataItem = _data[_fieldName].toString();
+            return Card(child: Padding(padding: EdgeInsets.all(_padding), child: Column(spacing: _margin, children: [
+              Text(_fieldName.toString(), style: Theme.of(context).textTheme.titleMedium),
+              _fieldType == SchemaFieldTypes.image ?
+                ClipRRect(borderRadius: BorderRadius.circular(_spacing), child: Image.network(
+                  _dataItem, 
+                  loadingBuilder: (context, child, loadingProgress){
+                    if(loadingProgress == null) return child;
+                    return Center(child: CircularProgressIndicator());
+                  },
+                  errorBuilder: (context, error, StackTrace){
+                    return Center(child: Icon(Icons.broken_image_rounded));
+                  },
+                  fit: BoxFit.cover
+                )):
+                Text(_dataItem, textAlign: TextAlign.center)
+            ])));
+          }
+        )
+      ))
+    );
+  }
+}
 
 
 
