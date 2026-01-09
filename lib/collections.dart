@@ -54,6 +54,32 @@ Future<void> updateCollectionSchema(String name, List<SchemaField> fields) async
   b.put("fields", fields.map((x) => {"name": x.name, "type": x.type, "options": x.options}).toList());
 }
 
+Future<void> renameReorderCollectionSchema(String name, List<String> newNames, List<int> newIndexes) async {
+  final b = await getBox(name);
+  final fields = b.get("fields");
+  final data = b.get("data");
+
+  final newFields = List.generate(newIndexes.length, (index){
+    final newField = fields[newIndexes[index]];
+    newField["name"] = newNames[newIndexes[index]];
+    return newField;
+  });
+  print(newFields.toString());
+  b.put("fields", newFields);
+
+  final newData = List.generate(data.length, (index){
+    Map<String, dynamic> item = Map<String, dynamic>.from(data[index]);
+    Map<String, dynamic> newItem = {};
+    for(int i=0; i < newNames.length; i++){
+      String cKey = item.keys.toList()[newIndexes[i]];
+      String nKey = newNames[newIndexes[i]];
+      newItem[nKey] = item[cKey];
+    }
+    return newItem;
+  });
+  b.put("data", newData);
+}
+
 
 class SchemaField{
   String name;

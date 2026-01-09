@@ -301,7 +301,7 @@ class _CollectionSchemaPageState extends State<CollectionSchemaPage>{
   late final bool _hasSchema;
 
   late final _schemaName = TextEditingController();
-  late List<String> _initFields;
+  late List<String> _initFields = [];
   late List<SchemaField> _fields = [];
 
   @override
@@ -444,15 +444,60 @@ class CollectionRenameReorderPage extends StatefulWidget{
 
 class _CollectionRenameReorderPageState extends State<CollectionRenameReorderPage>{
   final _formKey = GlobalKey<FormState>();
+  late List<TextEditingController> _schemaNames;
+  late List<int> _schemaOrder;
 
+  @override
+  void initState(){
+    super.initState();
+    _schemaNames = widget.schema.map((x) => TextEditingController(text: x["name"].toString())).toList();
+    _schemaOrder = List<int>.generate(_schemaNames.length, (index) => index);
+  }
+
+  Future<void> _submit() async {
+    if(!_formKey.currentState!.validate())return;
+    final newNames = _schemaNames.map((x) => x.text).toList();
+    final newIndexes = _schemaOrder;
+    await renameReorderCollectionSchema(widget.boxName, newNames, newIndexes);
+    Navigator.pop(context, true);
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: Text("Collection Schema")),
-      body: SafeArea(child: Form(key: _formKey, child: SingleChildScrollView(child: Padding(padding: EdgeInsets.all(_padding), child: Center(child: Column(spacing: _spacing, children: [
-        Text("Test")
-      ]))))))
+      bottomNavigationBar: Padding(padding: EdgeInsets.all(_padding), child: ElevatedButton(
+        onPressed: () async {
+          await _submit();
+        },
+        style: ElevatedButton.styleFrom(
+          padding: EdgeInsets.all(_padding),
+          textStyle: Theme.of(context).textTheme.titleMedium,
+        ),
+        child: Text("Save Schema")
+      )),
+      body: SafeArea(child: Form(key: _formKey, child: Padding(padding: EdgeInsets.all(_padding), child: Center(child: Column(spacing: _spacing, children: [
+        Expanded(child: ReorderableListView(
+          onReorder: (int oldIndex, int newIndex){
+            setState((){
+              if(newIndex > oldIndex)newIndex-=1;
+              final item = _schemaOrder.removeAt(oldIndex);
+              _schemaOrder.insert(newIndex, item);
+            });
+          },
+          children: _schemaOrder.map((x){
+            return ListTile(
+              key: ValueKey(x),
+              title: Padding(padding: EdgeInsets.only(right: 40), child: TextField(
+                controller: _schemaNames[x],
+                decoration: InputDecoration(
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(_spacing)),
+                )
+              ))
+            );
+          }).toList()
+        ))
+      ])))))
     );
   }
 }
