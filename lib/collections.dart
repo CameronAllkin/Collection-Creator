@@ -97,6 +97,8 @@ class SchemaFieldTypes{
   static const String dropdown = "Dropdown";
   static const String date = "Date";
   static const String image = "Image";
+  // static const String link = "Link";
+  // static const String formula = "Formula";
   static const List<String> types = [text, textArea, integer, double, boolean, dropdown, date, image];
 }
 

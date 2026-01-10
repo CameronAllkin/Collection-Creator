@@ -2,8 +2,6 @@
 
 ## All Pages
 - Fix layout issues
-    - fix layout of some large unbound widgets
-        - especially long expanded widgets in columns that take up a lot of space
     - fix button layout for better UX
 - fix scroll issues
     - some devices have some weird scroll physics when going through some pages
