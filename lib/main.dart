@@ -703,7 +703,7 @@ class _CollectionPageState extends State<CollectionPage>{
                 onTap: () async {
                   final res = Navigator.push(context, MaterialPageRoute(builder: (context) => CollectionItemDisplayPage(schema: _schema, data: Map<String, dynamic>.from(_displayData[index]))));
                 },
-                child: Card(child: Padding(padding: EdgeInsets.all(_spacing), child: Row(spacing: _margin, children: [
+                child: Card(child: Padding(padding: EdgeInsets.all(_spacing), child: Row(spacing: _spacing, children: [
                   ..._columnsA.map((k){
                     final td = _schema.firstWhere((x) => x["name"] == k)["type"];
                     return Expanded(
@@ -721,7 +721,12 @@ class _CollectionPageState extends State<CollectionPage>{
                           },
                           fit: BoxFit.cover
                         )):
-                        Text(_displayData[index][k].toString(), textAlign: TextAlign.center)
+                        ConstrainedBox(
+                          constraints: BoxConstraints(maxHeight: _padding*12), 
+                          child: SingleChildScrollView(
+                            child: Padding(padding: EdgeInsets.symmetric(vertical: _spacing), child: Text(_displayData[index][k].toString(), textAlign: TextAlign.center))
+                          )
+                        )
                     );
                   }),
                   PopupMenuButton(
@@ -1037,8 +1042,9 @@ class _CollectionItemDisplayPageState extends State<CollectionItemDisplayPage>{
             final String _fieldName = _schema[index]["name"];
             final String _fieldType = _schema[index]["type"];
             final String _dataItem = _data[_fieldName].toString();
-            return Card(child: Padding(padding: EdgeInsets.all(_padding), child: Column(spacing: _margin, children: [
-              Text(_fieldName.toString(), style: Theme.of(context).textTheme.titleMedium),
+            return Card(child: Padding(padding: EdgeInsets.all(_padding), child: Column(spacing: _spacing, children: [
+              Text(_fieldName.toString(), style: Theme.of(context).textTheme.titleLarge),
+              Divider(indent: _padding*2, endIndent: _padding*2),
               _fieldType == SchemaFieldTypes.image ?
                 ClipRRect(borderRadius: BorderRadius.circular(_spacing), child: Image.network(
                   _dataItem, 
@@ -1051,7 +1057,7 @@ class _CollectionItemDisplayPageState extends State<CollectionItemDisplayPage>{
                   },
                   fit: BoxFit.cover
                 )):
-                Text(_dataItem, textAlign: TextAlign.center)
+                Text(_dataItem, style: Theme.of(context).textTheme.bodyLarge, textAlign: TextAlign.center)
             ])));
           }
         )
