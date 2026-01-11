@@ -1,10 +1,6 @@
 # Design
 
 ## All Pages
-- Fix layout issues
-    - fix button layout for better UX
-- fix scroll issues
-    - some devices have some weird scroll physics when going through some pages
 
 
 
@@ -20,21 +16,16 @@
 - options for adjustable column width in display 
 
 ## Schema
-- formula for automatic filling of field 
-    - e.g. formula given on schem creation, not filled in manually by user per item, generated on item creation
 - editing, renaming, and reordering all in one interface not two
 
 ## Item
 - clicking on image opens a fullscreen version of image
-- clicking on link takes you to external website
 
 
 
 # Data
 
 ## Data Types
-- Link
-- Formula
 
 ## Data Conversion
 - Format changed schema data types in the data so that they are accurate to the type.
