@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'collections.dart';
 import 'settings.dart';
 
@@ -348,7 +349,7 @@ class _CollectionSchemaPageState extends State<CollectionSchemaPage>{
           padding: EdgeInsets.all(_padding),
           textStyle: Theme.of(context).textTheme.titleMedium        
         ),
-        child: Text("Create Collection")
+        child: Text(_hasSchema ? "Update Collection" : "Create Collection")
       )),
       body: SafeArea(child: Form(key: _formKey, child: SingleChildScrollView(child: Padding(padding: EdgeInsets.all(_padding), child: Center(child: Column(spacing: _spacing, children: [
         TextFormField(
@@ -703,15 +704,16 @@ class _CollectionPageState extends State<CollectionPage>{
                 onTap: () async {
                   final res = Navigator.push(context, MaterialPageRoute(builder: (context) => CollectionItemDisplayPage(schema: _schema, data: Map<String, dynamic>.from(_displayData[index]))));
                 },
-                child: Card(child: Padding(padding: EdgeInsets.all(_spacing), child: Row(spacing: _margin, children: [
+                child: Card(child: Padding(padding: EdgeInsets.all(_spacing), child: Row(spacing: _spacing, children: [
                   ..._columnsA.map((k){
+                    final data = getFieldData(Map<String, dynamic>.from(_displayData[index]), _displayData[index][k]);
                     final td = _schema.firstWhere((x) => x["name"] == k)["type"];
                     return Expanded(
                       flex: td == SchemaFieldTypes.textArea ? 3 : 
                             [SchemaFieldTypes.integer, SchemaFieldTypes.double].contains(td) ? 1 : 2,
                       child: td == SchemaFieldTypes.image ? 
                         ClipRRect(borderRadius: BorderRadius.circular(_spacing), child: Image.network(
-                          _displayData[index][k].toString(), 
+                          data, 
                           loadingBuilder: (context, child, loadingProgress){
                             if(loadingProgress == null) return child;
                             return Center(child: CircularProgressIndicator());
@@ -721,7 +723,26 @@ class _CollectionPageState extends State<CollectionPage>{
                           },
                           fit: BoxFit.cover
                         )):
-                        Text(_displayData[index][k].toString(), textAlign: TextAlign.center)
+                        ConstrainedBox(
+                          constraints: BoxConstraints(maxHeight: _padding*12), 
+                          child:SingleChildScrollView(
+                            child: Padding(padding: EdgeInsets.symmetric(vertical: _spacing), 
+                              child: td == SchemaFieldTypes.link ? 
+                                GestureDetector(
+                                  onTap: () async {
+                                    final url = Uri.tryParse(data);
+                                    if(url != null){
+                                      if(!await launchUrl(url, mode: LaunchMode.externalApplication)){
+                                        throw Exception("couldn't load URL");
+                                      }
+                                    }
+                                  },
+                                  child: Text(data, textAlign: TextAlign.center)
+                                ) :
+                                Text(data, textAlign: TextAlign.center)
+                            )
+                          )
+                        )
                     );
                   }),
                   PopupMenuButton(
@@ -807,7 +828,7 @@ class _CollectionItemPageState extends State<CollectionItemPage>{
     for(final f in _schema){
       final initialData = widget.data?[f["name"]];
       final t = f["type"];
-      if ([SchemaFieldTypes.text, SchemaFieldTypes.textArea, SchemaFieldTypes.integer, SchemaFieldTypes.double, SchemaFieldTypes.date, SchemaFieldTypes.image].contains(t)){
+      if ([SchemaFieldTypes.text, SchemaFieldTypes.textArea, SchemaFieldTypes.integer, SchemaFieldTypes.double, SchemaFieldTypes.date, SchemaFieldTypes.image, SchemaFieldTypes.link].contains(t)){
         _formFields.add(TextEditingController(
           text: initialData?.toString() ?? ""
         ));
@@ -846,6 +867,9 @@ class _CollectionItemPageState extends State<CollectionItemPage>{
           data[_fieldName] = _value.text;
         case SchemaFieldTypes.image:
           data[_fieldName] = _value.text;
+        case SchemaFieldTypes.link:
+          data[_fieldName] = _value.text;
+        
       }
     }
     widget.data == null ? AddDataToCollection(widget.name, data) : SetDataForCollectionItem(widget.name, data, widget.dataIndex!);
@@ -981,6 +1005,15 @@ class _CollectionItemPageState extends State<CollectionItemPage>{
                   ),
                   validator: (v) => _formFields[index].text.isEmpty ? "Fill In" : null,
                 );
+              case SchemaFieldTypes.link:
+                _widget = TextFormField(
+                  controller: _formFields[index],
+                  decoration: InputDecoration(
+                    labelText: _fieldName,
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(_spacing)),
+                  ),
+                  validator: (v) => _formFields[index].text.isEmpty ? "Fill In" : null,
+                );              
             }
             return Padding(padding: EdgeInsets.symmetric(vertical: _spacing), child: Column(children: [Row(
               spacing: _spacing,
@@ -1036,9 +1069,10 @@ class _CollectionItemDisplayPageState extends State<CollectionItemDisplayPage>{
           itemBuilder: (context, index){
             final String _fieldName = _schema[index]["name"];
             final String _fieldType = _schema[index]["type"];
-            final String _dataItem = _data[_fieldName].toString();
-            return Card(child: Padding(padding: EdgeInsets.all(_padding), child: Column(spacing: _margin, children: [
-              Text(_fieldName.toString(), style: Theme.of(context).textTheme.titleMedium),
+            final String _dataItem = getFieldData(_data, _data[_fieldName]);
+            return Card(child: Padding(padding: EdgeInsets.all(_padding), child: Column(spacing: _spacing, children: [
+              Text(_fieldName.toString(), style: Theme.of(context).textTheme.titleLarge),
+              Divider(indent: _padding*2, endIndent: _padding*2),
               _fieldType == SchemaFieldTypes.image ?
                 ClipRRect(borderRadius: BorderRadius.circular(_spacing), child: Image.network(
                   _dataItem, 
@@ -1051,7 +1085,19 @@ class _CollectionItemDisplayPageState extends State<CollectionItemDisplayPage>{
                   },
                   fit: BoxFit.cover
                 )):
-                Text(_dataItem, textAlign: TextAlign.center)
+              _fieldType == SchemaFieldTypes.link ?
+                GestureDetector(
+                  onTap: () async {
+                    final url = Uri.tryParse(_dataItem);
+                    if(url != null){
+                      if(!await launchUrl(url, mode: LaunchMode.externalApplication)){
+                        throw Exception("couldn't load URL");
+                      }
+                    }
+                  },
+                  child: Text(_dataItem, style: Theme.of(context).textTheme.bodyLarge, textAlign: TextAlign.center)
+                ) :
+                Text(_dataItem, style: Theme.of(context).textTheme.bodyLarge, textAlign: TextAlign.center)
             ])));
           }
         )
