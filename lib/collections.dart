@@ -98,8 +98,7 @@ class SchemaFieldTypes{
   static const String date = "Date";
   static const String image = "Image";
   static const String link = "Link";
-  static const String formula = "Formula";
-  static const List<String> types = [text, textArea, integer, double, boolean, dropdown, date, image, link, formula];
+  static const List<String> types = [text, textArea, integer, double, boolean, dropdown, date, image, link];
 }
 
 
@@ -125,6 +124,24 @@ Future<void> SetDataForCollectionItem(String name, Map<String, dynamic> data, in
 
 
 
+
+
+
+
+String getFieldData(Map<String, dynamic> data, dynamic value){
+  value = value.toString();
+  if(value[0] == "="){
+    value = evaluateFunction(data, value.substring(1));
+  }
+  return value;
+}
+
+String evaluateFunction(Map<String, dynamic> data, String formula){
+  for(final k in data.keys){
+    formula = formula.replaceAll("{$k}", data[k].toString());
+  }
+  return formula;
+}
 
 
 
