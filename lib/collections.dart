@@ -1,8 +1,14 @@
+import 'dart:io';
+
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:path_provider/path_provider.dart';
 
 Future<void> initHive() async {
-  await Hive.initFlutter();
+  final dir = await getApplicationDocumentsDirectory();
+  final hiveDir = Directory("${dir.path}/Collection_Creator_Data");
+  if(!await hiveDir.exists()) await hiveDir.create(recursive: true);
+  await Hive.initFlutter(hiveDir.path);
 }
 
 Future<List<String>> getBoxeNames() async {
