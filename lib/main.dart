@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'collections.dart';
 import 'settings.dart';
 
@@ -348,7 +349,7 @@ class _CollectionSchemaPageState extends State<CollectionSchemaPage>{
           padding: EdgeInsets.all(_padding),
           textStyle: Theme.of(context).textTheme.titleMedium        
         ),
-        child: Text("Create Collection")
+        child: Text(_hasSchema ? "Update Collection" : "Create Collection")
       )),
       body: SafeArea(child: Form(key: _formKey, child: SingleChildScrollView(child: Padding(padding: EdgeInsets.all(_padding), child: Center(child: Column(spacing: _spacing, children: [
         TextFormField(
@@ -723,8 +724,22 @@ class _CollectionPageState extends State<CollectionPage>{
                         )):
                         ConstrainedBox(
                           constraints: BoxConstraints(maxHeight: _padding*12), 
-                          child: SingleChildScrollView(
-                            child: Padding(padding: EdgeInsets.symmetric(vertical: _spacing), child: Text(_displayData[index][k].toString(), textAlign: TextAlign.center))
+                          child:SingleChildScrollView(
+                            child: Padding(padding: EdgeInsets.symmetric(vertical: _spacing), 
+                              child: td == SchemaFieldTypes.link ? 
+                                GestureDetector(
+                                  onTap: () async {
+                                    final url = Uri.tryParse(_displayData[index][k].toString());
+                                    if(url != null){
+                                      if(!await launchUrl(url, mode: LaunchMode.externalApplication)){
+                                        throw Exception("couldn't load URL");
+                                      }
+                                    }
+                                  },
+                                  child: Text(_displayData[index][k].toString(), textAlign: TextAlign.center)
+                                ) :
+                                Text(_displayData[index][k].toString(), textAlign: TextAlign.center)
+                            )
                           )
                         )
                     );
@@ -812,7 +827,7 @@ class _CollectionItemPageState extends State<CollectionItemPage>{
     for(final f in _schema){
       final initialData = widget.data?[f["name"]];
       final t = f["type"];
-      if ([SchemaFieldTypes.text, SchemaFieldTypes.textArea, SchemaFieldTypes.integer, SchemaFieldTypes.double, SchemaFieldTypes.date, SchemaFieldTypes.image].contains(t)){
+      if ([SchemaFieldTypes.text, SchemaFieldTypes.textArea, SchemaFieldTypes.integer, SchemaFieldTypes.double, SchemaFieldTypes.date, SchemaFieldTypes.image, SchemaFieldTypes.link, SchemaFieldTypes.formula].contains(t)){
         _formFields.add(TextEditingController(
           text: initialData?.toString() ?? ""
         ));
@@ -850,6 +865,10 @@ class _CollectionItemPageState extends State<CollectionItemPage>{
         case SchemaFieldTypes.date:
           data[_fieldName] = _value.text;
         case SchemaFieldTypes.image:
+          data[_fieldName] = _value.text;
+        case SchemaFieldTypes.link:
+          data[_fieldName] = _value.text;
+        case SchemaFieldTypes.formula:
           data[_fieldName] = _value.text;
       }
     }
@@ -986,6 +1005,25 @@ class _CollectionItemPageState extends State<CollectionItemPage>{
                   ),
                   validator: (v) => _formFields[index].text.isEmpty ? "Fill In" : null,
                 );
+              case SchemaFieldTypes.link:
+                _widget = TextFormField(
+                  controller: _formFields[index],
+                  decoration: InputDecoration(
+                    labelText: _fieldName,
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(_spacing)),
+                  ),
+                  validator: (v) => _formFields[index].text.isEmpty ? "Fill In" : null,
+                );
+              case SchemaFieldTypes.formula:
+                _widget = TextFormField(
+                  controller: _formFields[index],
+                  decoration: InputDecoration(
+                    labelText: _fieldName,
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(_spacing)),
+                  ),
+                  validator: (v) => _formFields[index].text.isEmpty ? "Fill In" : null,
+                );
+              
             }
             return Padding(padding: EdgeInsets.symmetric(vertical: _spacing), child: Column(children: [Row(
               spacing: _spacing,
@@ -1057,6 +1095,18 @@ class _CollectionItemDisplayPageState extends State<CollectionItemDisplayPage>{
                   },
                   fit: BoxFit.cover
                 )):
+              _fieldType == SchemaFieldTypes.link ?
+                GestureDetector(
+                  onTap: () async {
+                    final url = Uri.tryParse(_dataItem);
+                    if(url != null){
+                      if(!await launchUrl(url, mode: LaunchMode.externalApplication)){
+                        throw Exception("couldn't load URL");
+                      }
+                    }
+                  },
+                  child: Text(_dataItem, style: Theme.of(context).textTheme.bodyLarge, textAlign: TextAlign.center)
+                ) :
                 Text(_dataItem, style: Theme.of(context).textTheme.bodyLarge, textAlign: TextAlign.center)
             ])));
           }
