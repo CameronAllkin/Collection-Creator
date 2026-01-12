@@ -1,8 +1,8 @@
 import 'dart:io';
-
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:expressions/expressions.dart';
 
 Future<void> initHive() async {
   final dir = await getApplicationDocumentsDirectory();
@@ -137,15 +137,20 @@ Future<void> SetDataForCollectionItem(String name, Map<String, dynamic> data, in
 String getFieldData(Map<String, dynamic> data, dynamic value){
   value = value.toString();
   if(value[0] == "="){
-    value = evaluateFunction(data, value.substring(1));
+    value = evaluateFormula(data, value.substring(1));
   }
   return value;
 }
 
-String evaluateFunction(Map<String, dynamic> data, String formula){
+String evaluateFormula(Map<String, dynamic> data, String formula){
   for(final k in data.keys){
     formula = formula.replaceAll("{$k}", data[k].toString());
   }
+
+  final expr = Expression.parse(formula);
+  final eval = const ExpressionEvaluator();
+  formula = eval.eval(expr, {}).toString();
+
   return formula;
 }
 
