@@ -147,9 +147,14 @@ String evaluateFormula(Map<String, dynamic> data, String formula){
     formula = formula.replaceAll("{$k}", data[k].toString());
   }
 
-  final expr = Expression.parse(formula);
+  final expr = Expression.tryParse(formula);
+  if(expr == null) return formula;
   final eval = const ExpressionEvaluator();
-  formula = eval.eval(expr, {}).toString();
+  try {
+    formula = eval.eval(expr, {}).toString();
+  }catch (e){
+    formula = formula;
+  }
 
   return formula;
 }
